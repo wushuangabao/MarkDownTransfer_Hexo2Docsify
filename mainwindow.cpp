@@ -91,7 +91,7 @@ void MainWindow::on_pushButton_4_clicked()
     file.write("**[网站导航](doc/guide)**\n\n");
 
     // 存储 title 的数据结构（【】里的内容提取到 sub_layers）
-    QStringList sub_layers = {"其他"};
+    QStringList sub_layers;
     QVector<QStringList*> titles;
     QVector<QStringList*> paths;
     titles.append(new QStringList());
@@ -101,17 +101,23 @@ void MainWindow::on_pushButton_4_clicked()
     int idx = 0;
     for(; idx < 3; idx++)
     {
-        if(idx == 0)
-            file.write("- 读书文摘\n");
-        else if(idx == 1)
-            file.write("- 所思所想\n");
-        else if(idx == 2)
-            file.write("- 编程艺术\n");
-
         QString layer_root = file_root + "/" + layer_list.at(idx);
         QDir dir(layer_root);
         if(!dir.exists())
             continue;
+
+        if(idx == 0)
+            // doc/read
+            sub_layers.append("读书文摘");
+        else if(idx == 1)
+            // doc/think
+            sub_layers.append("所思所想");
+        else if(idx == 2)
+            // doc/code
+            sub_layers.append("编程艺术");
+        else
+            //目前没有这个目录
+            sub_layers.append("读书文摘");
 
         dir.setFilter(QDir::Files);
         QStringList list = dir.entryList();
@@ -161,28 +167,15 @@ void MainWindow::on_pushButton_4_clicked()
         }
 
         // 将标题写入_sidebar.md
-        if(sub_layers.size() == 1)
+        for(int i = sub_layers.size() - 1; i >= 0; i--)
         {
+            file.write(("- " + sub_layers[i] + "\n").toStdString().c_str());
             QString str;
-            int n = titles[0]->size();
+            int n = titles[i]->size();
             for(int j = 0; j < n; j++)
             {
-                str = "\t- [" + titles[0]->at(j) + "](" + layer_list.at(idx) + "/" + paths[0]->at(j) + ")\n";
+                str = "\t- [" + titles[i]->at(j) + "](" + layer_list.at(idx) + "/" + paths[i]->at(j) + ")\n";
                 file.write(str.toStdString().c_str());
-            }
-        }
-        else
-        {
-            for(int i = sub_layers.size() - 1; i >= 0; i--)
-            {
-                file.write(("\t- " + sub_layers[i] + "\n").toStdString().c_str());
-                QString str;
-                int n = titles[i]->size();
-                for(int j = 0; j < n; j++)
-                {
-                    str = "\t\t- [" + titles[i]->at(j) + "](" + layer_list.at(idx) + "/" + paths[i]->at(j) + ")\n";
-                    file.write(str.toStdString().c_str());
-                }
             }
         }
 
@@ -190,16 +183,15 @@ void MainWindow::on_pushButton_4_clicked()
         for(i = titles.size() - 1; i >= 0; i--)
         {
             titles[i]->clear();
+            delete titles[i];
             paths[i]->clear();
+            delete paths[i];
         }
         titles.clear();
         paths.clear();
         sub_layers.clear();
         titles.append(new QStringList());
         paths.append(new QStringList());
-        sub_layers.append("其他");
-
-        // 结束遍历子目录
     }
 
     file.write("\n**关于**\n- [作者](about/me)");
